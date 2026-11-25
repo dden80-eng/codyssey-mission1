@@ -11,22 +11,23 @@ Linux CLI 기반 작업 디렉터리 및 파일 권한 제어, Git 원격 저장
 
 ---
 
-## 1. 프로젝트 디렉터리 구조 및 파일 동기화 내역
+## 1. 프로젝트 디렉터리 구조 및 파일 동기화 명세
 
 ### 1.1 저장소 디렉터리 트리
 ```text
 codyssey-mission1/
 ├── Dockerfile
 ├── README.md
-└── index.html
+├── index.html
+└── web_preview.png
 ```
 
-### 1.2 파일별 역할 및 일관성 동기화 명세
+### 1.2 파일별 역할 및 일관성 동기화 기준
 | 파일명 | 역할 | 동기화 기준 |
 | :--- | :--- | :--- |
 | `Dockerfile` | `nginx:alpine` 경량 베이스 이미지에 `index.html`을 복사(`COPY`)하고 `80`번 포트를 개방(`EXPOSE 80`)하는 빌드 명세서 | `index.html` 경로 및 컨테이너 내부 웹 루트(`/usr/share/nginx/html/index.html`) 일치 |
 | `index.html` | 컨테이너 내부 Nginx 웹 서버가 호스트(`http://localhost:8080`) 요청에 응답으로 반환하는 정적 HTML 페이지 | `curl -i http://localhost:8080` 검증 출력과 내용 일치 |
-| `README.md` | 1~7단계 전체 작업 과정, 설계 원리(네임스페이스·권한·경로·스토리지), 실제 실행 로그, 트러블슈팅 사례를 기록한 기술 문서 | `Dockerfile` 및 `index.html` 실제 빌드·실행 결과 반영 |
+| `README.md` | 전체 작업 과정, 설계 원리(네임스페이스·권한·경로·스토리지), 실제 실행 로그, 트러블슈팅 사례를 기록한 기술 문서 | `Dockerfile` 및 `index.html` 실제 빌드·실행 결과 반영 |
 
 ---
 
@@ -67,6 +68,7 @@ origin	https://github.com/dden80-eng/codyssey-mission1.git (fetch)
 origin	https://github.com/dden80-eng/codyssey-mission1.git (push)
 
 $ git log --oneline -n 5
+f0e245b Fix & Docs: Step 2 chmod/ls -l 정상 로그 반영, 바인드 마운트 검증 로그 및 핵심 원리 쉬운 요약 추가
 1b3410d Docs & Sync: Dockerfile·index.html·README.md 일괄 동기화 및 상세 작업 과정·오류 트러블슈팅 기록 추가
 766a3d8 Complete Mission 1: Docker web server, port mapping, bind mount & volume
 ```
@@ -77,16 +79,16 @@ $ git log --oneline -n 5
 ```text
 /c/Users/leein12297572/codyssey-mission1/_cli_demo
 === [권한 변경 전 ls -l] ===
--rwxr-xr-x 1 leein12297572 1049089 45 Nov 25 15:47 src/deploy.sh
--rw-r--r-- 1 leein12297572 1049089  0 Nov 25 15:47 src/readme_note.txt
+-rwxr-xr-x 1 leein12297572 1049089 45 Nov 25 15:54 src/deploy.sh
+-rw-r--r-- 1 leein12297572 1049089  0 Nov 25 15:54 src/readme_note.txt
 === [chmod 755 / 644 적용 후 ls -l] ===
--rwxr-xr-x 1 leein12297572 1049089 45 Nov 25 15:47 src/deploy.sh
--rw-r--r-- 1 leein12297572 1049089  0 Nov 25 15:47 src/readme_note.txt
+-rwxr-xr-x 1 leein12297572 1049089 45 Nov 25 15:54 src/deploy.sh
+-rw-r--r-- 1 leein12297572 1049089  0 Nov 25 15:54 src/readme_note.txt
 total 1
-drwxr-xr-x 1 leein12297572 1049089  0 Nov 25 15:47 .
-drwxr-xr-x 1 leein12297572 1049089  0 Nov 25 15:47 ..
--rwxr-xr-x 1 leein12297572 1049089 45 Nov 25 15:47 deploy.sh
--rw-r--r-- 1 leein12297572 1049089  0 Nov 25 15:47 readme_note.txt
+drwxr-xr-x 1 leein12297572 1049089  0 Nov 25 15:54 .
+drwxr-xr-x 1 leein12297572 1049089  0 Nov 25 15:54 ..
+-rwxr-xr-x 1 leein12297572 1049089 45 Nov 25 15:54 deploy.sh
+-rw-r--r-- 1 leein12297572 1049089  0 Nov 25 15:54 readme_note.txt
 ```
 
 ### [Step 3] Docker Engine 데몬 상태 확인 및 `hello-world` 동작 검증
@@ -152,7 +154,7 @@ $ docker build --no-cache -t mission1-nginx:v1 .
 #1 DONE 0.0s
 
 #2 [internal] load metadata for docker.io/library/nginx:alpine
-#2 DONE 1.4s
+#2 DONE 1.1s
 
 #3 [internal] load .dockerignore
 #3 transferring context: 2B done
@@ -171,10 +173,10 @@ $ docker build --no-cache -t mission1-nginx:v1 .
 
 #7 exporting to image
 #7 exporting layers 0.1s done
-#7 exporting manifest sha256:8e5a332d8507c21dbb243224f1b6e3d981ae7e8dd0932954c28251c1a605ee8b 0.0s done
-#7 exporting config sha256:8e75d5ef4fa16193bd663a5b831aef895366d56accbea35588538c58a2234c16 0.0s done
-#7 exporting attestation manifest sha256:209dc01e66c0fa91b86a807fe3b454579bc365878064b6e8d33042366b489e8f 0.0s done
-#7 exporting manifest list sha256:9c5d07e27de564fb002f681065080ed9dbbbbe2ec95cece2f4489392e25355a9 0.0s done
+#7 exporting manifest sha256:9f9e118a0708ae6ba74e59facac39d4160d5a1d73a4d0be0750ed9212a0ec0f4 0.0s done
+#7 exporting config sha256:0a5f67bbdf28b7f4728ca0f0b4223bab67a6cb81f02dd2d92c3534dd68c424b2 0.0s done
+#7 exporting attestation manifest sha256:730c049ae673240b821d7891fa26973fbdf3a58f44d95e38026207de8e1c9cfb 0.0s done
+#7 exporting manifest list sha256:81cb671ed64cde0a823ef36efb9038b020900bd265dda01612fd2b0d50400332 0.0s done
 #7 naming to docker.io/library/mission1-nginx:v1 done
 #7 unpacking to docker.io/library/mission1-nginx:v1 0.0s done
 #7 DONE 0.2s
@@ -183,7 +185,7 @@ $ docker images
 IMAGE                ID             DISK USAGE   CONTENT SIZE   EXTRA
 alpine:latest        f59abe656b69         13MB         3.94MB        
 hello-world:latest   1e4c05b897a7       25.9kB         9.49kB        
-mission1-nginx:v1    9c5d07e27de5        102MB         28.8MB   U
+mission1-nginx:v1    81cb671ed64c        102MB         28.8MB   U
 ```
 
 ### [Step 5] 포트 매핑(`-p 8080:80`) 컨테이너 실행 및 호스트 HTTP 접속(`curl`) 검증
@@ -191,18 +193,18 @@ mission1-nginx:v1    9c5d07e27de5        102MB         28.8MB   U
 2. `docker ps -a`로 `0.0.0.0:8080->80/tcp` 포트 바인딩 상태를 확인하고, 호스트에서 `curl -i http://localhost:8080`을 실행해 `HTTP/1.1 200 OK` 응답과 `index.html` 본문이 정상 반환됨을 검증했습니다.
 ```text
 $ docker ps -a
-CONTAINER ID   IMAGE               COMMAND                   CREATED                  STATUS                  PORTS                                     NAMES
-0e08454c13ab   mission1-nginx:v1   "/docker-entrypoint.…"   Less than a second ago   Up Less than a second   0.0.0.0:8080->80/tcp, [::]:8080->80/tcp   m1-nginx-web
+CONTAINER ID   IMAGE               COMMAND                   CREATED        STATUS        PORTS                                     NAMES
+8aa9ff3b1021   mission1-nginx:v1   "/docker-entrypoint.…"   1 second ago   Up 1 second   0.0.0.0:8080->80/tcp, [::]:8080->80/tcp   m1-nginx-web
 
 $ curl -i http://localhost:8080
 HTTP/1.1 200 OK
 Server: nginx/1.31.10
-Date: Wed, 25 Nov 2026 06:47:23 GMT
+Date: Wed, 25 Nov 2026 06:54:18 GMT
 Content-Type: text/html
 Content-Length: 370
-Last-Modified: Wed, 25 Nov 2026 06:47:16 GMT
+Last-Modified: Wed, 25 Nov 2026 06:54:13 GMT
 Connection: keep-alive
-ETag: "6b068474-172"
+ETag: "6b068615-172"
 Accept-Ranges: bytes
 
 <!DOCTYPE html>
@@ -217,6 +219,10 @@ Accept-Ranges: bytes
 </body>
 </html>
 ```
+
+**▶ 실제 웹 브라우저(`http://localhost:8080`) 접속 스크린샷**
+
+![Nginx 웹 서버 접속 화면](web_preview.png)
 
 ### [Step 6] 바인드 마운트(Bind Mount) 기반 호스트 파일 수정 즉시 반영 검증
 1. 호스트 디렉터리를 컨테이너 웹 루트(`/usr/share/nginx/html`)에 `-v` 옵션으로 직접 바인드 마운트해 컨테이너를 실행했습니다.
@@ -240,7 +246,7 @@ m1_persist_vol
 
 $ docker run --rm --name m1-vol-c1 -v m1_persist_vol:/data alpine sh -c "echo 'Docker Volume Persistence Verified' > /data/persist.txt && ls -l /data && cat /data/persist.txt"
 total 4
--rw-r--r--    1 root     root            35 Nov 25 06:47 persist.txt
+-rw-r--r--    1 root     root            35 Nov 25 06:54 persist.txt
 Docker Volume Persistence Verified
 
 $ docker ps -a --filter name=m1-vol-c1  # 첫 번째 컨테이너 삭제 완료 확인
@@ -248,7 +254,7 @@ CONTAINER ID   IMAGE     COMMAND   CREATED   STATUS    PORTS     NAMES
 
 $ docker run --rm --name m1-vol-c2 -v m1_persist_vol:/data alpine sh -c "ls -l /data && cat /data/persist.txt"
 total 4
--rw-r--r--    1 root     root            35 Nov 25 06:47 persist.txt
+-rw-r--r--    1 root     root            35 Nov 25 06:54 persist.txt
 Docker Volume Persistence Verified
 ```
 
@@ -319,16 +325,26 @@ docker build -t mission1-nginx:v2 . && docker rm -f m1-nginx-web && docker run -
 ```text
 # [컨테이너 실행 중 8080 점유 확인]
 TCP    0.0.0.0:8080           0.0.0.0:0              LISTENING       9540
+  TCP    10.70.104.131:58197    10.60.30.12:8080       ESTABLISHED     22444
   TCP    10.70.104.131:60566    10.60.30.12:8080       ESTABLISHED     22444
+  TCP    127.0.0.1:8080         0.0.0.0:0              LISTENING       5652
+  TCP    127.0.0.1:53182        127.0.0.1:8080         TIME_WAIT       0
+  TCP    127.0.0.1:53183        127.0.0.1:8080         TIME_WAIT       0
   TCP    [::]:8080              [::]:0                 LISTENING       9540
-  TCP    [::1]:49489            [::1]:8080             TIME_WAIT       0
+  TCP    [::1]:8080             [::]:0                 LISTENING       5652
+  TCP    [::1]:53185            [::1]:8080             TIME_WAIT       0
 
 # [docker rm -f m1-nginx-web 실행 후 8080 해제 확인]
-TCP    10.70.104.131:60566    10.60.30.12:8080       ESTABLISHED     22444
+TCP    10.70.104.131:58197    10.60.30.12:8080       ESTABLISHED     22444
+  TCP    10.70.104.131:60566    10.60.30.12:8080       ESTABLISHED     22444
   TCP    127.0.0.1:8080         0.0.0.0:0              LISTENING       5652
-  TCP    127.0.0.1:49491        127.0.0.1:8080         TIME_WAIT       0
+  TCP    127.0.0.1:53182        127.0.0.1:8080         TIME_WAIT       0
+  TCP    127.0.0.1:53183        127.0.0.1:8080         TIME_WAIT       0
+  TCP    127.0.0.1:54672        127.0.0.1:8080         TIME_WAIT       0
   TCP    [::1]:8080             [::]:0                 LISTENING       5652
-  TCP    [::1]:49489            [::1]:8080             TIME_WAIT       0
+  TCP    [::1]:53185            [::1]:8080             TIME_WAIT       0
+  TCP    [::1]:54326            [::1]:8080             TIME_WAIT       0
+  TCP    [::1]:64071            [::1]:8080             TIME_WAIT       0
 ```
 
 ### 오류 사례 4: 컨테이너 삭제(`docker rm -f`) 시 내부 쓰기 계층 데이터 유실 문제
